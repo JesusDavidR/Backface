@@ -1,0 +1,443 @@
+ <!DOCTYPE html>
+<html>
+  <head>
+    <title>el intento</title>
+    <style>
+      html, body { margin: 0; padding: 0; overflow: hidden; }
+    </style>
+  </head>
+  <body>
+    <script src="js/three.js"></script>
+    <script src="js/controls/OrbitControls.js"></script>
+    <script src='js/libs/dat.gui.min.js'></script>
+    <script>
+	
+		//REALIZADO POR: Jesus Ruiz, Andres Villamizar 
+	
+		var rightArrow = false;
+		var wKey = false;
+		var sKey = false;
+		
+		var scene, aspect, camera, camera2, renderer, controls;
+        var mapWidth = 320, mapHeight = 240;
+        var w = window.innerWidth, h = window.innerHeight;
+        var frustumSize = 5;
+		var huh;
+		var Carlos, raycaster, intersects;
+		
+		var sphere, sphere1, sphere2;
+		
+		var xC=-45, yC= 45, zC=50;
+		
+		var ObjArray = [];
+		var colorz=[];
+		var BufferSeta=[];
+		
+		var startTime = Date.now();
+		 var geoCuboEaluar;
+		var geometry, geometry2, geometry1, geometry3;
+		init();
+		animate();
+		var objetorender, materialrender, objetorender1, materialrender1;
+		var meshMaterial, meshMaterial1, meshMaterial2;
+	
+	
+		function init(){
+		
+			var onKeyDown = function ( event ) {
+				switch ( event.keyCode ) {
+				
+					
+					case 78: 
+						rightArrow = true;
+						break;
+					case 87: // ROTAR Z
+						wKey = true;
+						break;
+					case 83: // ROTAR Y
+						sKey = true;
+						break;
+					
+						
+				}
+			};	  
+			var onKeyUp = function ( event ) {
+				switch ( event.keyCode ) {
+					
+					
+					case 78: // ROTAR CCW
+						rightArrow = false;
+						break;
+					
+					case 87: // ROTAR Z
+						wKey = false;
+						break;
+					case 83: // ROTAR Y
+						sKey = false;
+						break;
+					
+					
+				}
+			};
+			
+			document.addEventListener( 'keydown', onKeyDown, false );
+			document.addEventListener( 'keyup', onKeyUp, false );
+			
+			
+			scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0xAAAAAA );
+			aspect = window.innerWidth / window.innerHeight;
+			camera = new THREE.PerspectiveCamera( 45, aspect, 0.1, 500);
+			camera2 = new THREE.PerspectiveCamera( 45, 1, 0.1, 50);
+			PacoElFlaco = new THREE.PerspectiveCamera( 45, 1, 0.1, 50);
+			
+            var helper = new THREE.CameraHelper( camera2 );
+			
+            scene.add( helper );
+			renderer = new THREE.WebGLRenderer({antialias: true});
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+			controls = new THREE.OrbitControls( camera, renderer.domElement );
+            
+			var vector = new THREE.Vector3();
+			camera2.getWorldDirection( vector );
+			//console.log(vector);
+			
+			
+			
+			
+			var size = 10;
+			var arrowSize = 1;
+			var divisions = size;
+			var origin = new THREE.Vector3( 0, 0, 0 );
+			var x = new THREE.Vector3( 1, 0, 0 );
+			var y = new THREE.Vector3( 0, 1, 0 );
+		  	var z = new THREE.Vector3( 0, 0, 1 );
+			var color1 = new THREE.Color( 0xFFFFFF );
+		  	var color2 = new THREE.Color( 0x333333 );
+		  	var colorR = new THREE.Color( 0xAA3333 );
+		  	var colorG = new THREE.Color( 0x33AA33 );
+		  	var colorB = new THREE.Color( 0x333366 );
+		  
+		  	//CREAR LAS GRILLAS PARA EL ESCENARIO
+		  	var axesHelper = new THREE.AxesHelper( size );
+		  	var gridHelperXY = new THREE.GridHelper( size, divisions, color1, color1);
+		  	var gridHelperXZ = new THREE.GridHelper( size, divisions, color2, color2 );
+		  	var gridHelperYZ = new THREE.GridHelper( size, divisions, color2, color2 );
+            
+            //ROTARLAS PARA QUE QUEDEN EN EL ESPACIO ADECUADO
+            gridHelperXY.rotateOnWorldAxis ( x, THREE.Math.degToRad(90) );
+            gridHelperXZ.rotateOnWorldAxis ( y, THREE.Math.degToRad(90) );
+            gridHelperYZ.rotateOnWorldAxis ( z, THREE.Math.degToRad(90) );
+            
+            //CREAR LAS FLECHAS QUE INDICAN LOS EJES DE COORDENADAS 3D
+            var arrowX = new THREE.ArrowHelper( x, origin, arrowSize, colorR );
+            var arrowY = new THREE.ArrowHelper( y, origin, arrowSize, colorG );
+            var arrowZ = new THREE.ArrowHelper( z, origin, arrowSize, colorB );
+            
+            //CREAR ILUMINACIÓN
+            var ambient = new THREE.AmbientLight( 0xffffff, 2 );
+            scene.add( ambient );
+            
+            var pointLight = new THREE.PointLight( 0xffffff, 1, 100 );
+            pointLight.position.set( 5, 5, -5 );
+            scene.add( pointLight );
+			
+			//Ejercicio
+			var a = new THREE.Vector3( 0, 1, 0 );
+            
+			//CREAR LAS GEOMETRÍAS
+			//Far plane
+			var width = 16.0;
+			var height = 9.0;
+			var planeGeometry = new THREE.PlaneGeometry(width, height);
+
+			//CUBO EN EL ESPACIO
+			var boxGeometry = new THREE.BoxGeometry(1,2,1);
+				
+            //CREAR LOS MATERIALES
+            var material1 = new THREE.MeshStandardMaterial( { color: 0xAA3333, metalness: 0.5, roughness: 0.1 } );
+            var material2 = new THREE.MeshStandardMaterial( { color: 0x33AA33, metalness: 0.5, roughness: 0.1 } );
+            var material3 = new THREE.MeshStandardMaterial( { color: 0x3333AA, metalness: 0.5, roughness: 0.1 } );
+			
+			//CREAR LOS OBJETOS
+            scene.add( arrowX );
+            scene.add( arrowY );
+            scene.add( arrowZ );
+            
+            geometry = new THREE.SphereGeometry( 1.5, 8, 8 );
+			geometry1 = new THREE.SphereGeometry( 1.5, 8, 8 );
+			geometry2 = new THREE.SphereGeometry( 1.5, 8, 8 );
+			geometry3 = new THREE.SphereGeometry(0.2, 10, 10 );
+			 meshMaterial = new THREE.MeshStandardMaterial( {color: 0x00ff00} );
+			meshMaterial.vertexColors = THREE.FaceColors;
+			 meshMaterial1 = new THREE.MeshStandardMaterial( {color: 0xAA3333} );
+			meshMaterial1.vertexColors = THREE.FaceColors;
+			 meshMaterial2 = new THREE.MeshStandardMaterial( {color: 0x3333AA} );
+			meshMaterial2.vertexColors = THREE.FaceColors;
+			
+			var lineMaterial = new THREE.LineBasicMaterial( { color: 0xffffff, transparent: true, opacity: 0.5 } );
+			
+			
+			
+			 sphere = new THREE.Mesh( geometry, meshMaterial );
+			 sphere1 = new THREE.Mesh( geometry, meshMaterial1 );
+			 sphere2 = new THREE.Mesh( geometry, meshMaterial2 );
+			
+			sphere1.translateY(3);
+			sphere1.translateX(-2);
+			sphere2.translateX(3);
+			
+			
+			var lines = new THREE.LineSegments( geometry, lineMaterial );
+			var geometryMod = new THREE.Geometry;
+			
+			
+			sphere.translateZ(-10);
+			sphere1.translateZ(-10);
+			sphere2.translateZ(-10);
+			
+			
+			ObjArray.push(sphere);
+			ObjArray.push(sphere1);
+			ObjArray.push(sphere2);
+			
+			raycaster = new THREE.Raycaster();
+			 Carlos = new THREE.Vector3(xC, yC, zC);
+			//console.log(Carlos);
+			
+			
+			
+			//console.log(intersects.length);
+			//console.log(ObjArray.length);
+			
+			
+
+/*
+			for ( var i = 0; i < intersects.length; i++ ) {
+				intersects[ i ].object.material.color.set( 0xff0000);
+				
+				for ( var k = 0; k < ObjArray.length; k++ ) {
+				console.log(intersects[i].object.geometry);
+				console.log(ObjArray[k].geometry);
+					if(intersects[i].object.geometry == ObjArray[k].geometry){
+						
+						console.log("hoila");
+						for(var j=0; j<intersects[j].object.geometry.faces.length; j++){
+						
+							console.log("hoila");
+							if(vector.dot(intersects[j].object.geometry.faces[j].normal)>0){
+
+								intersects[j].object.geometry.faces[j].color = new THREE.Color( 0xff0000 );
+							}
+						}	
+					}
+				}
+			}
+	*/			
+			
+			
+			scene.add( sphere );
+			scene.add( sphere1 );
+			scene.add( sphere2 );
+			
+			camera.position.x = 0;
+			camera.position.y = 0;
+		  	camera.position.z = 10;
+			
+		  	camera.lookAt( origin );
+			
+			PacoElFlaco.position.x = 10;
+			PacoElFlaco.position.y = 0;
+		  	PacoElFlaco.position.z = -10;
+			PacoElFlaco.lookAt( -10, 0, -10 );
+			
+			
+			
+			//console.log(window.innerWidth);
+			//console.log(mapWidth*5);
+		}
+		function animate() {
+			requestAnimationFrame( animate );
+			controls.update(); // required if controls.enableDamping = true, or if controls.autoRotate = true
+			render();
+		}
+		function intento1(){
+			var aux;
+			var raycOrigen= new THREE.Vector3(0,0,0);//Coordenadas de origen
+			for( var i1 =0; i1<90;i1++){
+				console.log("aca si? 1");
+				for(var j2=0; j2<90;j2++){
+				
+					if(j2==89){
+					
+						zC=-45;
+					}
+					zC++;
+					Carlos = new THREE.Vector3(0, 0, zC);
+					console.log("aca si? 2");
+					
+					
+					raycaster = new THREE.Raycaster(raycOrigen,Carlos.normalize());
+					intersects = raycaster.intersectObjects( ObjArray );
+					huh= new THREE.Vector3(0,0,-1);
+					aux=intersects.length;
+					
+					console.log(aux);
+					for ( var i = 0; i < aux; i++ ) {
+						
+						console.log("aca si? 3");
+						intersects[ i ].object.material.color.set( 0xff0000 );
+						for(var j=0;j<intersects[ i ].object.geometry.faces.length-1;j++){
+							console.log("aca si? 4");
+							if(huh.dot(intersects[ i ].object.geometry.faces[j].normal)>=0){
+								console.log("aca si? 5");
+								intersects[ i ].object.geometry.faces.splice(j,1);
+								intersects[ i ].object.geometry.elementsNeedUpdate=true;
+								
+
+							}
+					
+					
+						}
+					
+					
+					}
+					
+					
+				}
+				
+				if(i1==89){
+				
+					yC=-45;
+				}
+				yC++;
+			}
+		}
+		
+		function intento2(){
+			var ray= new THREE.Vector3(0,0,0);//Coordenadas de origen
+			Carlos = new THREE.Vector3(0, 0, -1);
+					console.log("aca si? 2");
+					
+					
+					raycaster = new THREE.Raycaster(ray,Carlos.normalize());
+					intersects = raycaster.intersectObjects( ObjArray );
+					huh= new THREE.Vector3(5,5,-100);
+					aux=intersects.length;
+					
+					console.log(aux);
+					for ( var i = 0; i < 3; i++ ) {
+						
+						console.log("aca si? 3");
+						intersects[ i ].object.material.color.set( 0x8B4EF7 );
+						for(var j=0;j<intersects[ i ].object.geometry.faces.length;j++){
+							console.log("aca si? 4");
+							if(huh.dot(intersects[ i ].object.geometry.faces[j].normal)>=0){
+								console.log("aca si? 5");
+								intersects[ i ].object.geometry.faces.splice(j,1);
+								intersects[ i ].object.geometry.elementsNeedUpdate=true;
+								
+								
+								
+							
+							}
+					
+					
+						}
+					
+					
+					}
+					
+		}
+		function intento3ejercio2(){
+		
+			var ray= new THREE.Vector3(0,0,0);//Coordenadas de origen
+			Carlos = new THREE.Vector3(0, 0, -1);
+					console.log("aca si? 2");
+					
+					
+					raycaster = new THREE.Raycaster(ray,Carlos.normalize());
+					intersects = raycaster.intersectObjects( ObjArray );
+					huh= new THREE.Vector3(5,5,-100);
+					aux=intersects.length;
+					
+					console.log(aux);
+					for ( var i = 0; i < 3; i++ ) {
+						
+						console.log("aca si? 3");
+						intersects[ i ].object.material.color.set( 0x8B4EF7 );
+						for(var j=0;j<intersects[ i ].object.geometry.faces.length;j++){
+							console.log("aca si? 4");
+							if(huh.dot(intersects[ i ].object.geometry.faces[j].normal)>=0){
+								console.log("aca si? 5");
+								intersects[ i ].object.geometry.faces.splice(j,1);
+								intersects[ i ].object.geometry.elementsNeedUpdate=true;
+								
+								BufferSeta.push(intersects[ i ].object.geometry.scale);
+								intersects[ i ].object.geometry.scale(1,1,0);
+								
+								intersects[ i ].object.material.color.toArray(colorz);
+								var material= new THREE.MeshBasicMaterial();
+								material.color.fromArray(colorz);
+								
+								var geometrys = new THREE.PlaneGeometry( 1.5, 1.5, 1.5 );
+								
+								var plane = new THREE.Mesh( geometrys, material );
+								scene.add( plane );
+								
+								
+								var planes = new THREE.Mesh( geometrys, meshMaterial2 );
+								planes.position.x=2;
+								scene.add( planes );
+								var planess = new THREE.Mesh( geometrys, meshMaterial1 );
+								planess.position.x=-1;
+								planess.position.y=2;
+								scene.add( planess );
+								console.log(colorz);
+								
+							}
+					
+					
+						}
+					
+					
+					}
+		}
+        function render() {
+			
+			if(wKey){
+				intento3ejercio2();
+			}
+			
+			if(sKey){
+				intento2();
+			}
+            renderer.setViewport( 0, 0, w, h );
+            renderer.setScissor( 0, 0, w, h );
+            renderer.render( scene, camera );
+			
+			
+            renderer.setViewport( 10, 10, mapWidth, mapHeight );
+            renderer.setScissor( 10, 10, mapWidth, mapHeight );
+            renderer.setScissorTest( true );
+            renderer.render( scene, camera2 );
+			
+			
+            renderer.setViewport( window.innerWidth-300, 10, mapWidth, mapHeight );
+            renderer.setScissor( window.innerWidth-300, 10, mapWidth, mapHeight );
+            renderer.setScissorTest( true );
+			renderer.render( scene, PacoElFlaco );
+			
+		}
+    </script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
